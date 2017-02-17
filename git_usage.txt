@@ -1,0 +1,93 @@
+Branching Model
+We follow the model prescribed in this article. That link is also required reading. It is extremely important that we all follow the model.
+The golden rule here is NEVER commit to anything that is not develop or a feature branch.
+Don't worry about the section titled "Decentralized but centralized," (even though it's very interesting) because we don't plan on using each other's machines as remotes.
+One addition we are making to the model is to have a 'test' branch living between develop and master, making the total of infinitely living branches 3: develop, test, and master.
+I think of the model hierarchically like this:
+master
+------------
+* release/hotfix
+-------------
+test
+-------------
+develop
+-------------
+* feature (ex. Appswell, App Delete, etc.)
+* = 0 or more relatively short-lived branches.
+where for each step in the upwards direction you get increased stability and an order of magnitude fewer commits;
+and each step downwards gives you more recent features, but less stability and more frequent commits.
+If everyone lives in the philosophy of the branching model, it should help us keep the development process sane and efficient. 
+A few notes on what this means from the perspective of a developer:
+1) The model describes only remote branches, what you do on your machine is your business as long as your interaction with the remote falls within the guidelines. Most of your focus will be on the develop and feature branches.
+2) A day in the life might be something like this:
+     + fetch all changes from origin.
+     + merge changes from develop into the feature branch you're working on
+     + resolve any conflicting work you may have pulled down
+     + push your updated feature branch back to github (so you're teammates don't each have to pull the latest from develop)
+     + do some work, committing and pushing  to your feature branch often.
+     + repeat
+3) Not all work has to be on a feature branch. We should have the discussion about which features should have their own github branches during sprint planning meetings.
+Basic Workflow Example
+Beginning with a fresh and completely up-to-date clone and zero local commits. 
+Working on develop
+Using local branching
+Local Branch: A branch that exists only on your local machine. You have not pushed this branch to github (origin) or any other remotes. 
+Using local branches is a part of the idiomatic way to use git. There are plenty of resources online that explain the advantages of using local branches with in-depth examples. The purpose of this text is to server more as a reference.
+ 
+1) Create your local branch.
+You can do this using 'git branch <branchname>' or 'git checkout -b <branchname>'
+2) Do some work on your local branch and commit.
+This is the meat of it, and also the easiest part. Further explanation is unnecessary (wink)
+3) Update your local branch with upstream work on its parent branch.
+This part is important. Not only is it always a good idea to make sure you stay up-to-date with upstream changes, but it is also good practice to do this before merging your work back to the upstream branch.
+git fetch
+git checkout parent_branch
+git rebase origin/parent_branch
+git checkout child_branch
+git merge --no-ff parent_branch
+Then solve any conflicts if necessary.
+Thats it for keeping your local branch up to date. More information on rebasing is available here.
+4) Integrating your local branch with its parent branch.
+While it is technically groovy to do something like the following:
+(develop) $ git merge FEATURE-X
+It often doesn't make sense to do a merge (especially a non-fast-forward merge) of your private branch, because you are making your private branching history public when you create a merge commit (a commit with two parents). On the other hand it never makes sense to rebase in this direction. That is because a rebase in the direction of private -> public would insert your private commits in the past – therefore changing history on your colleagues. This is never acceptable. If you are confused by this concept, please ask around and someone will help you out.
+Now that you know which methods you probably shouldn't use, lets discuss what you should do.
+(develop) $ git merge --squash FEATURE-X
+The above command is the way I normally integrate my private branches into their parents. A squash merge takes all of the new commits on the local branch, and creates a single new commit on top of  the parent branch. Most importantly, this single commit only has one parent (it is not a merge commit). This method is useful, because we often want the ability to create many commits on our local branches that aren't particularly meaningful as multiple commits to the team.
+If, however, you feel it is important to keep your private commits discrete and separate, then it is fine to do a regular merge:
+(develop) $ git merge FEATURE-X
+Just be aware that if develop changed since the time your create your branch that this will create a 'merge commit,' that is, a commit with two parents. This will muddy the network of branches a bit, therefore it is advisable to do a merge --squash as a normal course of action. 
+ 
+Working on a feature branch
+Using local branching while working on a feature branch
+Creating a release branch
+To create a release branch, first create the branch locally and push it to the remote repository:
+git checkout test
+git branch release-DATE
+git checkout release-DATE
+git push -u origin release-DATE
+ 
+The -u argument to push means git will set up the new remote branch you are pushing as the upstream branch to track.
+Archiving Branches
+Sometimes we do useful work on branches that never get merged into develop for reasons of time, priorities changing, etc. They will hang around forever cluttering our branch list unless we either delete them or archive them.
+If the work is no longer useful, delete the branch.
+If the work is useful, and it's just not being actively worked on, archive it for use later. Archiving it will keep it out of the branch list, while still allowing us to unarchive it later and preserve all of the history.
+To archive a branch, follow these steps.
+Checkout the branch.
+Fetch and rebase the branch to the latest.
+Tag the branch with this command:
+git tag archive/branch_name branch_name
+Delete the branch from the github remote server with this command:
+git push origin :branch_name
+Push the archived branch to the server with this command:
+git push --tags
+Checkout another branch (like develop) and delete the branch locally with this command:
+git branch -D branch_name
+The branch is no longer visible in branches, but preserved as a tag prepended with 'archive'.
+Restore Archived Branch
+To restore an archived branch, follow these steps.
+Checkout the branch from archive with this command:
+git checkout -b branch_name archive/branch_name
+Push unarchived branch to the server with this command:
+git push -u origin branch_name
+The archived branch is now unarchived and active in github.
